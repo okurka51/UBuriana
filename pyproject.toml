@@ -1,0 +1,29 @@
+[project]
+name = "uburiana"
+version = "0.1.0"
+description = "Flask app for managing daily food orders and printing delivery labels"
+requires-python = ">=3.14"
+dependencies = [
+    "Flask>=3.1,<4",
+    "SQLAlchemy>=2.0,<3",
+    "reportlab>=5.0,<6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.1",
+]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+include = ["model*", "utils*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
