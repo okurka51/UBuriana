@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='tables.css') }}">
+    <title>U Buriana</title>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('index') }}" class="brand">U Buriana</a>
+    </header>
+
+    <main class="columns">
+        <div id="left-side" class="card">
+            <h1>{{selected_date}}</h1>
+
+            <a class="button" target="_blank"
+               href="{{ url_for('delivery_labels', date=selected_date.isoformat()) }}">
+                Print delivery labels
+            </a>
+
+            <h2>Cooking summary</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item code</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in cooking_summary %}
+                        <tr>
+                            <td>{{ row[0] }}</td>
+                            <td>{{ row[1] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="right-side" class="card">
+            <div class="card-header">
+                <h2>Customers</h2>
+                <form method="post" action="{{ url_for('new_customer') }}">
+                    <button type="submit" class="button">New customer</button>
+                </form>
+            </div>
+            <table>
+                <tbody>
+                    {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <span class="swatch" style="background: {{ customer.color }}"></span>
+                                <a href="{{ url_for('customer_page', customer_id=customer.id) }}">{{ customer.name }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>

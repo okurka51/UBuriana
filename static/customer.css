@@ -1,0 +1,197 @@
+.customer-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* customer info */
+
+.customer-card {
+    display: flex;
+    gap: 20px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.color-stripe {
+    width: 24px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+}
+
+.customer-info {
+    padding: 20px 20px 20px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: flex-end;
+}
+
+.delete-form {
+    margin-left: auto;
+    padding: 20px;
+    align-self: flex-start;
+}
+
+.danger-button {
+    padding: 8px 20px;
+    font: inherit;
+    font-weight: 600;
+    color: #b3261e;
+    background: var(--surface);
+    border: 1px solid #b3261e;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.danger-button:hover {
+    color: #fff;
+    background: #b3261e;
+}
+
+.customer-info h1 {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.customer-info label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.customer-info input[type="text"] {
+    padding: 6px 10px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    min-width: 200px;
+}
+
+.color-field {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.color-field input[type="color"] {
+    width: 40px;
+    height: 34px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+}
+
+/* orders table */
+
+.orders-header,
+.orders-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.orders-header h2 {
+    margin-bottom: 0;
+}
+
+.orders-header {
+    margin-bottom: 12px;
+}
+
+.orders-footer {
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.table-wrap {
+    max-height: 65vh;
+    overflow: auto;
+}
+
+#order-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    text-align: center;
+}
+
+#order-table thead th:first-child {
+    text-align: left;
+}
+
+#order-table td {
+    text-align: center;
+    padding: 4px 8px;
+}
+
+#order-table .date-cell {
+    text-align: left;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.weekday {
+    display: inline-block;
+    width: 2.5em;
+    color: var(--muted);
+}
+
+#order-table tr.past .date-cell {
+    color: var(--muted);
+}
+
+#order-table tr.today {
+    background-color: var(--highlight);
+}
+
+#order-table tr.today .date-cell {
+    font-weight: 700;
+}
+
+.count-input {
+    width: 4.5em;
+    padding: 4px 6px;
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+}
+
+.count-input.zero {
+    font-weight: 400;
+    color: #b0b5bc;
+}
+
+.count-input.changed {
+    border-color: var(--accent);
+    background: #eef3fc;
+}
+
+.count-input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+}
+
+.save-button {
+    padding: 8px 28px;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.save-button:hover {
+    background: var(--accent-hover);
+}
