@@ -120,7 +120,7 @@ def test_customer_page_asks_before_delete(client):
     html = c.get(f"/customers/{ids['Marek']}").get_data(as_text=True)
 
     assert f'action="/customers/{ids["Marek"]}/delete"' in html
-    assert "data-confirm=" in html and "all of their orders (1)" in html
+    assert "data-confirm=" in html and "všechny jeho objednávky (1)" in html
 
 
 def test_delivery_labels_returns_pdf(client):
@@ -151,3 +151,63 @@ def test_index_links_to_delivery_labels(client):
     c, _, _ = client
     html = c.get("/").get_data(as_text=True)
     assert "/api/delivery_labels?date=" in html
+
+
+def test_new_menu_item_is_added(client):
+    c, db, _ = client
+
+    response = c.post("/menu_items/new", data={"code": " H1 ", "name": "Guláš"})
+
+    assert response.status_code == 302
+    assert ("H1", "Guláš") in [(i.code, i.name) for i in db.get_all_menu_items()]
+
+
+def test_new_menu_item_without_name(client):
+    c, db, _ = client
+    c.post("/menu_items/new", data={"code": "H1", "name": ""})
+    assert ("H1", None) in [(i.code, i.name) for i in db.get_all_menu_items()]
+
+
+@pytest.mark.parametrize("code", ["", "   ", "X" * 11])
+def test_new_menu_item_invalid_code_is_400(client, code):
+    c, db, _ = client
+    assert c.post("/menu_items/new", data={"code": code}).status_code == 400
+    assert len(db.get_all_menu_items()) == 2
+
+
+def test_new_menu_item_duplicate_code_shows_error(client):
+    c, db, _ = client
+
+    response = c.post("/menu_items/new", data={"code": "PZ1"}, follow_redirects=True)
+
+    assert "Položka s tímto kódem už v jídelníčku je." in response.get_data(as_text=True)
+    assert len(db.get_all_menu_items()) == 2
+
+
+def test_delete_menu_item_removes_its_orders(client):
+    c, db, ids = client
+    today = datetime.date.today()
+    db.upsert_order(ids["Marek"], ids["PZ1"], today, 2)
+    db.upsert_order(ids["Petr"], ids["BG2"], today, 1)
+
+    response = c.post(f"/menu_items/{ids['PZ1']}/delete")
+
+    assert response.status_code == 302
+    assert [i.code for i in db.get_all_menu_items()] == ["BG2"]
+    assert db.totals_on(today) == [("BG2", 1)]
+
+
+def test_delete_unknown_menu_item_is_404(client):
+    c, _, _ = client
+    assert c.post("/menu_items/999/delete").status_code == 404
+
+
+def test_index_warns_before_deleting_menu_item_with_orders(client):
+    c, db, ids = client
+    db.upsert_order(ids["Marek"], ids["PZ1"], datetime.date.today(), 2)
+
+    html = c.get("/").get_data(as_text=True)
+
+    assert f'action="/menu_items/{ids["PZ1"]}/delete"' in html
+    assert "Opravdu smazat položku „PZ1“? Smažou se i všechny její objednávky" in html
+    assert "Opravdu smazat položku „BG2“?\"" in html   # no orders, no warning

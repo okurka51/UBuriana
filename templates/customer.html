@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,38 +23,38 @@
                     <h1 id="customer-heading">{{ customer.name }}</h1>
 
                     <label>
-                        Name
+                        Jméno
                         <input type="text" name="name" value="{{ customer.name }}" required>
                     </label>
 
                     <label>
-                        Color
+                        Barva
                         <span class="color-field">
-                            <input type="color" id="color-picker" aria-label="Pick color">
+                            <input type="color" id="color-picker" aria-label="Vybrat barvu">
                             <input type="text" name="color" id="color-text" value="{{ customer.color }}" required>
                         </span>
                     </label>
 
-                    <button type="submit" class="save-button">Save</button>
+                    <button type="submit" class="save-button">Uložit</button>
                 </form>
 
                 <form method="post" action="{{ url_for('delete_customer', customer_id=customer.id) }}" class="delete-form"
-                      data-confirm="Really delete customer &quot;{{ customer.name }}&quot;? This will also delete all of their orders ({{ order_count }}). This cannot be undone.">
-                    <button type="submit" class="danger-button">Delete customer</button>
+                      data-confirm="Opravdu smazat zákazníka „{{ customer.name }}“? Smažou se i všechny jeho objednávky ({{ order_count }}). Tuto akci nelze vrátit.">
+                    <button type="submit" class="danger-button">Smazat zákazníka</button>
                 </form>
             </section>
 
             <form method="post" action="{{ url_for('save_orders', customer_id=customer.id) }}" class="card">
                 <div class="orders-header">
-                    <h2>Orders</h2>
-                    <button type="submit" class="save-button">Save</button>
+                    <h2>Objednávky</h2>
+                    <button type="submit" class="save-button">Uložit</button>
                 </div>
 
                 <div class="table-wrap">
                     <table id="order-table">
                         <thead>
                             <tr>
-                                <th>Date</th>
+                                <th>Datum</th>
                                 {% for item in menu_items %}
                                     <th title="{{ item.name or '' }}">{{ item.code }}</th>
                                 {% endfor %}
@@ -64,8 +64,8 @@
                             {% for date, counts in rows %}
                                 <tr class="{{ 'today' if date == today }}{{ ' past' if date < today }}">
                                     <td class="date-cell">
-                                        <span class="weekday">{{ date.strftime('%a') }}</span>
-                                        {{ date.isoformat() }}
+                                        <span class="weekday">{{ date | cz_weekday(short=True) }}</span>
+                                        {{ date | cz_date }}
                                     </td>
                                     {% for item in menu_items %}
                                         <td>

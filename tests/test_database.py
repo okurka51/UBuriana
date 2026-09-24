@@ -136,6 +136,25 @@ class TestMenuItems:
         assert "PZ1" in [i.code for i in db.get_all_menu_items()]
         assert db.totals_on(today) == [("PZ1", 2)]
 
+    def test_remove_menu_item_with_delete_orders(self, populated, today):
+        db, ids = populated
+        db.upsert_order(ids["Marek"], ids["PZ1"], today, 2)
+        db.upsert_order(ids["Petr"], ids["BG2"], today, 1)
+
+        assert db.remove_menu_item(ids["PZ1"], delete_orders=True) is True
+
+        assert [i.code for i in db.get_all_menu_items()] == ["BG2"]
+        assert db.totals_on(today) == [("BG2", 1)]
+
+    def test_order_counts_by_menu_item(self, populated, today):
+        db, ids = populated
+        tomorrow = today + datetime.timedelta(days=1)
+        db.upsert_order(ids["Marek"], ids["PZ1"], today, 2)
+        db.upsert_order(ids["Petr"], ids["PZ1"], tomorrow, 5)
+
+        # counts order rows, not portions; items without orders are missing
+        assert db.order_counts_by_menu_item() == {ids["PZ1"]: 2}
+
 # endregion
 
 

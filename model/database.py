@@ -2,7 +2,7 @@ from .helpers import CustomerDTO, MenuItemDTO, OrderDTO, CustomerOrdersDTO
 from .models import Customer, Order, MenuItem, Base
 
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, event, select, func
+from sqlalchemy import create_engine, event, select, func, delete
 
 import datetime
 
@@ -125,16 +125,24 @@ class DBManager:
             session.add(item)
             session.commit()
 
-    def remove_menu_item(self, id: int) -> bool:
+    def remove_menu_item(self, id: int, delete_orders: bool = False) -> bool:
         with Session(self.engine) as session:
 
             item = session.get(MenuItem, id)
 
             if item is None: return False
 
+            if delete_orders:
+                session.execute(delete(Order).where(Order.menu_item_id == id))
+
             session.delete(item)
-            session.commit()   # raises IntegrityError if the item has orders
+            session.commit()   # raises IntegrityError if the item still has orders
             return True
+
+    def order_counts_by_menu_item(self) -> dict[int, int]:
+        with Session(self.engine) as session:
+            stmt = select(Order.menu_item_id, func.count(Order.id)).group_by(Order.menu_item_id)
+            return {item_id: count for item_id, count in session.execute(stmt)}
 
     def update_menu_item(self, id:int, name:str|None=None):
         with Session(self.engine) as session:

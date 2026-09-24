@@ -2,6 +2,7 @@ from flask import Flask, request, abort, redirect, url_for, send_file
 from flask import render_template
 from model.database import DBManager
 from model.helpers import CustomerDTO, OrderDTO, MenuItemDTO
+from sqlalchemy.exc import IntegrityError
 from utils.PDFRender.PDFGenerator import delivery_labels_pdf
 import datetime
 import io
@@ -15,23 +16,79 @@ if DEBUG:
 
 app = Flask(__name__)
 
+WEEKDAYS = ["pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota", "neděle"]
+WEEKDAYS_SHORT = ["po", "út", "st", "čt", "pá", "so", "ne"]
+
+@app.template_filter("cz_date")
+def cz_date(date:datetime.date) -> str:
+    return f"{date.day}. {date.month}. {date.year}"
+
+@app.template_filter("cz_weekday")
+def cz_weekday(date:datetime.date, short:bool = False) -> str:
+    return (WEEKDAYS_SHORT if short else WEEKDAYS)[date.weekday()]
+
+
+@app.errorhandler(400)
+def bad_request(_):
+    return "Neplatný požadavek.", 400
+
+@app.errorhandler(404)
+def not_found(_):
+    return "Stránka nebyla nalezena.", 404
+
+@app.errorhandler(500)
+def server_error(_):
+    return "Na serveru nastala chyba.", 500
+
+
+ERROR_MESSAGES = {
+    "duplicate_code": "Položka s tímto kódem už v jídelníčku je.",
+}
+
 @app.route("/")
 def index():
     today = datetime.date.today()
 
     customers = db.get_all_customers()
     cooking_summary = db.totals_on(today)
-    orders = db.orders_on(today)
 
     return render_template("index.html", 
         selected_date = today,
         cooking_summary = cooking_summary,
-        customers = customers
+        customers = customers,
+        menu_items = db.get_all_menu_items(),
+        menu_order_counts = db.order_counts_by_menu_item(),
+        error = ERROR_MESSAGES.get(request.args.get("error"))
     )
 
 
+MENU_CODE_MAX_LENGTH = 10
+
+@app.post("/menu_items/new")
+def new_menu_item():
+    code = request.form.get("code", "").strip()
+    name = request.form.get("name", "").strip()
+    if not code or len(code) > MENU_CODE_MAX_LENGTH:
+        abort(400)
+
+    try:
+        db.add_menu_item(code, name or None)
+    except IntegrityError:
+        return redirect(url_for("index", error="duplicate_code"))
+
+    return redirect(url_for("index"))
+
+
+@app.post("/menu_items/<int:item_id>/delete")
+def delete_menu_item(item_id:int):
+    if not db.remove_menu_item(item_id, delete_orders=True):
+        abort(404)
+
+    return redirect(url_for("index"))
+
+
 ORDER_DAYS_AHEAD = 14
-NEW_CUSTOMER_NAME = "New customer"
+NEW_CUSTOMER_NAME = "Nový zákazník"
 NEW_CUSTOMER_COLOR = "gray"
 
 @app.post("/customers/new")
@@ -126,6 +183,6 @@ def delivery_labels():
 
     return send_file(io.BytesIO(pdf),
         mimetype = "application/pdf",
-        download_name = f"labels-{date.isoformat()}.pdf"
+        download_name = f"stitky-{date.isoformat()}.pdf"
     )
 

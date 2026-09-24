@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,19 +14,19 @@
 
     <main class="columns">
         <div id="left-side" class="card">
-            <h1>{{selected_date}}</h1>
+            <h1>{{ selected_date | cz_weekday }} {{ selected_date | cz_date }}</h1>
 
             <a class="button" target="_blank"
                href="{{ url_for('delivery_labels', date=selected_date.isoformat()) }}">
-                Print delivery labels
+                Tisk štítků
             </a>
 
-            <h2>Cooking summary</h2>
+            <h2>Souhrn vaření</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Item code</th>
-                        <th>Count</th>
+                        <th>Kód</th>
+                        <th>Počet</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -35,16 +35,67 @@
                             <td>{{ row[0] }}</td>
                             <td>{{ row[1] }}</td>
                         </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="2" class="empty">Na dnešek nejsou žádné objednávky.</td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
+
+            <h2 class="section-heading">Jídelníček</h2>
+
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kód</th>
+                        <th>Název</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in menu_items %}
+                        {% set order_count = menu_order_counts.get(item.id, 0) %}
+                        <tr>
+                            <td>{{ item.code }}</td>
+                            <td>{{ item.name or '' }}</td>
+                            <td class="actions">
+                                <form method="post" action="{{ url_for('delete_menu_item', item_id=item.id) }}"
+                                      {% if order_count %}
+                                      data-confirm="Opravdu smazat položku „{{ item.code }}“? Smažou se i všechny její objednávky u všech zákazníků ({{ order_count }}). Tuto akci nelze vrátit."
+                                      {% else %}
+                                      data-confirm="Opravdu smazat položku „{{ item.code }}“?"
+                                      {% endif %}>
+                                    <button type="submit" class="small-danger-button">Smazat</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="empty">Jídelníček je prázdný.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <form method="post" action="{{ url_for('new_menu_item') }}" class="add-item-form">
+                <input type="text" name="code" placeholder="Kód (např. P1)" maxlength="10" required
+                       aria-label="Kód">
+                <input type="text" name="name" placeholder="Název (nepovinné)" maxlength="100"
+                       aria-label="Název">
+                <button type="submit" class="button">Přidat</button>
+            </form>
         </div>
 
         <div id="right-side" class="card">
             <div class="card-header">
-                <h2>Customers</h2>
+                <h2>Zákazníci</h2>
                 <form method="post" action="{{ url_for('new_customer') }}">
-                    <button type="submit" class="button">New customer</button>
+                    <button type="submit" class="button">Nový zákazník</button>
                 </form>
             </div>
             <table>
@@ -61,5 +112,13 @@
             </table>
         </div>
     </main>
+
+    <script>
+        document.querySelectorAll("form[data-confirm]").forEach(form => {
+            form.addEventListener("submit", event => {
+                if (!confirm(form.dataset.confirm)) event.preventDefault();
+            });
+        });
+    </script>
 </body>
 </html>

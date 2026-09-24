@@ -1,5 +1,6 @@
 import io
 import os
+import warnings
 
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
@@ -14,14 +15,32 @@ A4_HEIGHT = A4[1]
 MIN_NAME_SIZE = 6
 
 
+FONT_NAME = "LabelFont"
+
+# first existing file wins; LABEL_FONT env var can point to any other .ttf
+FONT_CANDIDATES = [
+    os.environ.get("LABEL_FONT", ""),
+    os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "arial.ttf"),
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",              # Debian, Ubuntu
+    "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",            # Fedora
+    "/usr/share/fonts/dejavu/DejaVuSans.ttf",                       # older Fedora, CentOS
+    "/usr/share/fonts/TTF/DejaVuSans.ttf",                          # Arch
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    "/usr/share/fonts/liberation-sans/LiberationSans-Regular.ttf",
+]
+
+
 def register_font() -> str:
-    """Built-in Helvetica can't draw Czech letters (ř, č, ě, ...), so use Arial when available."""
-    path = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "arial.ttf")
-    if not os.path.exists(path):
-        return "Helvetica"
-    if "Arial" not in pdfmetrics.getRegisteredFontNames():
-        pdfmetrics.registerFont(TTFont("Arial", path))
-    return "Arial"
+    """Built-in Helvetica can't draw Czech letters (ř, č, ě, ...), so use a system TrueType font."""
+    for path in FONT_CANDIDATES:
+        if path and os.path.exists(path):
+            if FONT_NAME not in pdfmetrics.getRegisteredFontNames():
+                pdfmetrics.registerFont(TTFont(FONT_NAME, path))
+            return FONT_NAME
+
+    warnings.warn("No TrueType font found, labels will use Helvetica and Czech letters will break. "
+                  "Install DejaVu fonts (e.g. apt install fonts-dejavu-core) or set LABEL_FONT.")
+    return "Helvetica"
 
 DEFAULT_FONT = register_font()
 
