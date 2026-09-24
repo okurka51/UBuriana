@@ -1,3 +1,5 @@
 .venv
 database.db
 temp
+**/__pycache__/
+.pytest_cache/
